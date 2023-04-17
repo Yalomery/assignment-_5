@@ -1,0 +1,122 @@
+---
+title: "Assignment 5"
+author: "Yousef"
+date: "2023-04-12"
+output: word_document
+---
+
+```{r load-packages, include=FALSE}
+
+library(cluster)
+library(ISLR)
+library(tidyverse)
+library(factoextra)
+library(readr)
+```
+
+
+```{r}
+#Load the data set and convert it into a data frame
+Cereals <- read_csv("/Users/binsalim/Downloads/Cereals.csv")
+df <- Cereals
+df <- as.data.frame(df)
+df <- na.omit(df) # Remove NA (missing) values
+Cereals_clean <- na.omit(Cereals)
+head(df)          # Examine the dataset 
+```
+
+
+```{r}
+#Clean the dataframe and examine it
+df <- na.omit(df) # Remove NA (missing) values
+Cereals_clean <- na.omit(Cereals)
+head(df)          # Examine the dataset 
+```
+
+
+```{r}
+#Normalize the numrical columns
+df <-- df[,4:16]
+df <- scale(df)
+```
+
+
+```{r}
+#Reassign the nonnumrical column to the dataframe after normalization
+Normalized_df_Data <- cbind(df, name = Cereals_clean$name)
+Normalized_df_Data <- cbind(df, mfr = Cereals_clean$mfr)
+Normalized_df_Data <- cbind(df, type = Cereals_clean$type)
+head(df) #re-examine the scaled data 
+```
+
+```{r}
+#Compute with agnes and with different linkage methods
+hc_single <- agnes(df, method = "single")
+hc_complete <- agnes(df, method = "complete")
+hc_average <- agnes(df, method = "average")
+hc_ward.D <- agnes(df, method = "ward")
+#Compare Agglomerative coefficients
+print(hc_single$ac)
+print(hc_complete$ac)
+print(hc_average$ac)
+print(hc_ward.D$ac) # is the best method as it classify 0.9046042 into their actual cluster and the closer to 1 is best.
+```
+
+```{r}
+#Plot with the best method in this case ward is the best
+pltree(hc_ward.D, cex = 0.6, hang = -1, main = "Dendrogram of agnes") 
+```
+
+```{r}
+#Calculate the euclidean to use in the clustering using ward since it is the best method
+distance <- dist(df, method = "euclidean")
+# Hierarchical clustering using ward method
+hc1 <- hclust(distance, method = "ward.D2" )
+```
+
+```{r}
+#Now plot using the euclidean distance and ward method
+# Plot the obtained dendrogram
+plot(hc1, cex = 0.6, hang = -1)
+```
+
+How many clusters would you choose?
+4 clusters 
+```{r}
+#Cut the tree into four group and show how many member is in each group 
+grp <- cutree(hc1, k = 4)
+# Number of members in each cluster
+table(grp)
+```
+
+```{r}
+#now bind the group membership to each record 
+df <- as.data.frame(cbind(df,grp))
+```
+
+```{r}
+#visulaize the cereals and their cluster membership
+fviz_cluster(list(data = df, cluster = grp))
+```
+
+```{r}
+#Now using the numrical and the group membership show each clusters members
+Newdf = Cereals_clean[,4:16]
+clust <- cbind(Newdf, grp)
+clust[clust$grp==1,]
+clust[clust$grp==2,]
+clust[clust$grp==3,]
+clust[clust$grp==4,]
+```
+
+```{r}
+#now based on the rating columns show the mean rating of each cluster to determine which cluster have the highes rating
+mean(clust[clust$grp==1,"rating"])
+mean(clust[clust$grp==2,"rating"])
+mean(clust[clust$grp==3,"rating"])
+mean(clust[clust$grp==4,"rating"])
+```
+from the rating we could tell that cluster one has the highest rating therefore it is the cluster with the best breakfast cereals.
+
+Should the data be normalized?
+you need to first define what "healthy" means. Depending on the criteria, you may or may not need to normalize the data. For example, if you define "healthy" as cereals that have high fiber content and low sugar content, then you should normalize the data
